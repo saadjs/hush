@@ -1,0 +1,3 @@
+// Shared signing configuration. Developer-specific values belong in the
+// optional, Git-ignored file below.
+#include? "Signing.local.xcconfig"

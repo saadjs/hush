@@ -1,0 +1,70 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+
+EASYLIST_URL=https://easylist.to/easylist/easylist.txt
+UASSETS_COMMIT=4849b1e02b16f647475750f872bf57212e0c94a6
+UASSETS_URL="https://raw.githubusercontent.com/uBlockOrigin/uAssets/$UASSETS_COMMIT/filters/filters.txt"
+CONVERTER_COMMIT=7a2e93f0afa70479cc59985f332025236c3f0c39
+CONVERTER_URL=https://github.com/AdguardTeam/SafariConverterLib.git
+
+printf 'Downloading EasyList and uBlock filters…\n'
+curl -fsSL --retry 3 -A 'Hush rule builder' "$EASYLIST_URL" -o "$WORK/easylist.txt"
+curl -fsSL --retry 3 "$UASSETS_URL" -o "$WORK/ublock.txt"
+cat "$WORK/easylist.txt" "$WORK/ublock.txt" > "$WORK/source.txt"
+
+printf 'Building the pinned Safari rule converter…\n'
+git -C "$WORK" init -q converter
+git -C "$WORK/converter" remote add origin "$CONVERTER_URL"
+git -C "$WORK/converter" fetch -q --depth 1 origin "$CONVERTER_COMMIT"
+git -C "$WORK/converter" checkout -q FETCH_HEAD
+swift build -q -c release --package-path "$WORK/converter" --product ConverterTool
+
+printf 'Converting rules…\n'
+"$WORK/converter/.build/release/ConverterTool" convert \
+  --safari-version 15.0 \
+  --advanced-blocking false \
+  --input-path "$WORK/source.txt" \
+  --safari-rules-json-path "$WORK/blockerList.json" \
+  > "$WORK/conversion.log"
+
+swift -e 'import Foundation; _ = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])))' "$WORK/blockerList.json"
+RULE_COUNT=$(LC_ALL=C grep -o '"action":{"type":' "$WORK/blockerList.json" | wc -l | tr -d ' ')
+[ "$RULE_COUNT" -le 150000 ] || { echo "Too many Safari rules: $RULE_COUNT" >&2; exit 1; }
+
+EASYLIST_COMMIT=$(awk -F': ' '/^! Commit:/{print $2; exit}' "$WORK/easylist.txt")
+EASYLIST_SHA=$(shasum -a 256 "$WORK/easylist.txt" | awk '{print $1}')
+UASSETS_SHA=$(shasum -a 256 "$WORK/ublock.txt" | awk '{print $1}')
+{
+  echo "EasyList commit: $EASYLIST_COMMIT"
+  echo "EasyList SHA-256: $EASYLIST_SHA"
+  echo "uAssets commit: $UASSETS_COMMIT"
+  echo "uAssets SHA-256: $UASSETS_SHA"
+  echo "SafariConverterLib commit: $CONVERTER_COMMIT"
+  echo "Safari rules: $RULE_COUNT"
+} > "$WORK/SOURCES"
+
+GENERATED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+printf '{"generated":"%s","ruleCount":%s,"sources":["EasyList","uBlock Origin"]}\n' \
+  "$GENERATED" "$RULE_COUNT" > "$WORK/rules-metadata.json"
+
+mv "$WORK/source.txt" "$ROOT/Rules/source.txt"
+mv "$WORK/blockerList.json" "$ROOT/Rules/blockerList.json"
+mv "$WORK/SOURCES" "$ROOT/Rules/SOURCES"
+mv "$WORK/rules-metadata.json" "$ROOT/Rules/rules-metadata.json"
+
+# Safari keeps its compiled copy until the bundle version changes, so every rule change needs a bump.
+VERSION=$(awk '/^ *CURRENT_PROJECT_VERSION:/{print $2; exit}' "$ROOT/project.yml")
+NEXT=$((VERSION + 1))
+sed -i '' "s/^\( *CURRENT_PROJECT_VERSION:\) .*/\1 $NEXT/" "$ROOT/project.yml"
+
+if command -v xcodegen >/dev/null 2>&1; then
+  (cd "$ROOT" && xcodegen generate --quiet)
+else
+  printf 'XcodeGen not found: run xcodegen generate before building.\n' >&2
+fi
+
+printf 'Generated %s bundled Safari rules at build version %s.\n' "$RULE_COUNT" "$NEXT"

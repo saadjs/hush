@@ -1,0 +1,150 @@
+name: Hush
+options:
+  bundleIdPrefix: sh.saad
+  deploymentTarget:
+    iOS: "16.0"
+    macOS: "13.0"
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
+settings:
+  base:
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+    SWIFT_VERSION: "6.0"
+    CURRENT_PROJECT_VERSION: 2
+    MARKETING_VERSION: 0.1.0
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    STRING_CATALOG_GENERATE_SYMBOLS: YES
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  Hush-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - path: Rules/rules-metadata.json
+        buildPhase: resources
+    dependencies:
+      - target: ContentBlocker-iOS
+        embed: true
+    info:
+      path: App/Info-iOS.plist
+      properties:
+        CFBundleDisplayName: Hush
+        CFBundleIdentifier: sh.saad.hush
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: sh.saad.hush
+        PRODUCT_NAME: Hush
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  ContentBlocker-iOS:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ContentBlocker
+        excludes:
+          - Info-iOS.plist
+          - Info-macOS.plist
+      - path: Rules/blockerList.json
+        buildPhase: resources
+    info:
+      path: ContentBlocker/Info-iOS.plist
+      properties:
+        CFBundleDisplayName: Hush
+        CFBundleIdentifier: sh.saad.hush.ContentBlocker
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.Safari.content-blocker
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ContentBlockerRequestHandler"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: sh.saad.hush.ContentBlocker
+        PRODUCT_NAME: Content Blocker
+        SKIP_INSTALL: YES
+        # Safari loads the appex binary directly; the debug-dylib shim hides the principal class
+        ENABLE_DEBUG_DYLIB: NO
+
+  Hush-macOS:
+    type: application
+    platform: macOS
+    sources:
+      - App
+      - path: Rules/rules-metadata.json
+        buildPhase: resources
+    dependencies:
+      - target: ContentBlocker-macOS
+        embed: true
+    entitlements:
+      path: App/Hush-macOS.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: sh.saad.hush
+        PRODUCT_NAME: Hush
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Hush
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  ContentBlocker-macOS:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: ContentBlocker
+        excludes:
+          - Info-iOS.plist
+          - Info-macOS.plist
+      - path: Rules/blockerList.json
+        buildPhase: resources
+    entitlements:
+      path: ContentBlocker/ContentBlocker-macOS.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    info:
+      path: ContentBlocker/Info-macOS.plist
+      properties:
+        CFBundleDisplayName: Hush
+        CFBundleIdentifier: sh.saad.hush.ContentBlocker
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.Safari.content-blocker
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ContentBlockerRequestHandler"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: sh.saad.hush.ContentBlocker
+        PRODUCT_NAME: Content Blocker
+        SKIP_INSTALL: YES
+        # Safari loads the appex binary directly; the debug-dylib shim hides the principal class
+        ENABLE_DEBUG_DYLIB: NO
+        # PlugInKit bootstraps AppKit subsystems before it instantiates the handler
+        OTHER_LDFLAGS: "-framework AppKit"
+
+schemes:
+  Hush-iOS:
+    build:
+      targets:
+        Hush-iOS: all
+    run:
+      config: Debug
+  Hush-macOS:
+    build:
+      targets:
+        Hush-macOS: all
+    run:
+      config: Debug
