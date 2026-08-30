@@ -73,8 +73,11 @@ printf '==> Verifying the app and its content blocker\n'
 [ -f "$APPEX/Contents/Resources/blockerList.json" ] || { echo "blockerList.json missing from the appex" >&2; exit 1; }
 codesign --verify --strict --verbose=2 "$APP"
 for target in "$APP" "$APPEX"; do
-  codesign -dv "$target" 2>&1 | grep -q 'flags=.*runtime' \
-    || { echo "hardened runtime not enabled on $target" >&2; exit 1; }
+  # Matched on captured output: grep -q can SIGPIPE codesign, which pipefail reads as failure.
+  case "$(codesign -dv "$target" 2>&1)" in
+    *flags=*runtime*) ;;
+    *) echo "hardened runtime not enabled on $target" >&2; exit 1 ;;
+  esac
 done
 
 printf '==> Notarizing (this takes a few minutes)\n'
