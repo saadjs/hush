@@ -2,6 +2,18 @@
 
 An ultra-minimal native Safari content blocker for iPhone, iPad, and Mac. Its only purpose is to block ads.
 
+## Install
+
+macOS, via Homebrew:
+
+```sh
+brew install --cask saadjs/tap/hush
+```
+
+Open Hush once so Safari registers the content blocker, then enable it under Safari → Settings → Extensions.
+
+iOS is distributed through TestFlight and the App Store. Enable it under Settings → Apps → Safari → Extensions.
+
 ## Privacy
 
 Hush collects, stores, and transmits no data. It contains no analytics, accounts, advertising, networking code, or JavaScript page injection. Safari compiles and applies the bundled declarative rules.
@@ -55,10 +67,6 @@ macOS ships through Homebrew:
 ```
 
 Archives, exports a Developer ID build, notarizes and staples it, then prints the `version` and `sha256` for `Casks/hush.rb` in [saadjs/homebrew-tap](https://github.com/saadjs/homebrew-tap). Requires a Developer ID Application certificate and a `notarytool` keychain profile named `hush-notary`.
-
-```sh
-brew install --cask saadjs/tap/hush
-```
 
 iOS ships through TestFlight and the App Store:
 
