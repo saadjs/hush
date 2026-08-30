@@ -61,10 +61,18 @@ VERSION=$(awk '/^ *CURRENT_PROJECT_VERSION:/{print $2; exit}' "$ROOT/project.yml
 NEXT=$((VERSION + 1))
 sed -i '' "s/^\( *CURRENT_PROJECT_VERSION:\) .*/\1 $NEXT/" "$ROOT/project.yml"
 
+# Homebrew only upgrades when the marketing version changes, so date-stamp it from this run.
+RELEASE=$(printf '%s' "${GENERATED%%T*}" | tr '-' '.')
+PREVIOUS=$(awk '/^ *MARKETING_VERSION:/{print $2; exit}' "$ROOT/project.yml")
+sed -i '' "s/^\( *MARKETING_VERSION:\) .*/\1 $RELEASE/" "$ROOT/project.yml"
+if [ "$PREVIOUS" = "$RELEASE" ]; then
+  printf 'Warning: %s already shipped; set MARKETING_VERSION by hand to release again today.\n' "$RELEASE" >&2
+fi
+
 if command -v xcodegen >/dev/null 2>&1; then
   (cd "$ROOT" && xcodegen generate --quiet)
 else
   printf 'XcodeGen not found: run xcodegen generate before building.\n' >&2
 fi
 
-printf 'Generated %s bundled Safari rules at build version %s.\n' "$RULE_COUNT" "$NEXT"
+printf 'Generated %s bundled Safari rules for %s (build %s).\n' "$RULE_COUNT" "$RELEASE" "$NEXT"

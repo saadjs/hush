@@ -42,7 +42,23 @@ The bundled rules are generated from EasyList and uBlock Origin's ad filters:
 ./scripts/update-rules
 ```
 
+Each run bumps `CURRENT_PROJECT_VERSION`, which is what makes Safari recompile the rules, and sets `MARKETING_VERSION` to the generation date, which is what makes Homebrew offer the upgrade.
+
 Third-party filter data retains its own license; see `THIRD_PARTY_NOTICES.md`. Hush's original source code is MIT-licensed.
+
+## Releasing
+
+iOS ships through the App Store. macOS ships through Homebrew:
+
+```sh
+./scripts/release-macos
+```
+
+Archives, exports a Developer ID build, notarizes and staples it, then prints the `version` and `sha256` for `Casks/hush.rb` in [saadjs/homebrew-tap](https://github.com/saadjs/homebrew-tap). Requires a Developer ID Application certificate and a `notarytool` keychain profile named `hush-notary`.
+
+```sh
+brew install --cask saadjs/tap/hush
+```
 
 ## Principles
 

@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# Build, Developer ID sign, notarize, staple, and zip Hush.app for the Homebrew
+# cask. Prints the sha256 and the cask fields to paste into saadjs/homebrew-tap.
+#
+# Usage: scripts/release-macos [version]      (defaults to project.yml's MARKETING_VERSION)
+#
+# Auth, one time:
+#   xcrun notarytool store-credentials hush-notary \
+#     --key <AuthKey_XXXX.p8> --key-id <key-id> --issuer <issuer-id>
+# CI instead exports NOTARY_KEY_PATH, NOTARY_KEY_ID, NOTARY_ISSUER_ID.
+set -euo pipefail
+
+TEAM_ID=2ZPA772V9V
+SCHEME=Hush-macOS
+APP_NAME=Hush
+GH_REPO="${GH_REPO:-saadjs/hush}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-hush-notary}"
+
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+VERSION="${1:-$(awk '/^ *MARKETING_VERSION:/{print $2; exit}' "$ROOT/project.yml")}"
+
+BUILD="$ROOT/build/release"
+ARCHIVE="$BUILD/$APP_NAME.xcarchive"
+EXPORT="$BUILD/export"
+APP="$EXPORT/$APP_NAME.app"
+APPEX="$APP/Contents/PlugIns/Content Blocker.appex"
+ZIP="$BUILD/$APP_NAME-$VERSION.zip"
+
+if [ -n "${NOTARY_KEY_PATH:-}" ]; then
+  NOTARY_AUTH=(--key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID")
+else
+  NOTARY_AUTH=(--keychain-profile "$NOTARY_PROFILE")
+fi
+
+rm -rf "$BUILD"
+mkdir -p "$BUILD"
+
+cat > "$BUILD/ExportOptions.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>developer-id</string>
+    <key>teamID</key>
+    <string>$TEAM_ID</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>signingCertificate</key>
+    <string>Developer ID Application</string>
+</dict>
+</plist>
+EOF
+
+printf '==> Archiving %s %s\n' "$SCHEME" "$VERSION"
+xcodebuild archive \
+  -project "$ROOT/Hush.xcodeproj" \
+  -scheme "$SCHEME" \
+  -configuration Release \
+  -destination 'generic/platform=macOS' \
+  -archivePath "$ARCHIVE" \
+  MARKETING_VERSION="$VERSION"
+
+printf '==> Exporting Developer ID build\n'
+xcodebuild -exportArchive \
+  -archivePath "$ARCHIVE" \
+  -exportPath "$EXPORT" \
+  -exportOptionsPlist "$BUILD/ExportOptions.plist"
+
+# A Hush build without a signed, hardened appex holding the rules is a silent no-op.
+printf '==> Verifying the app and its content blocker\n'
+[ -d "$APPEX" ] || { echo "Content Blocker.appex missing from the export" >&2; exit 1; }
+[ -f "$APPEX/Contents/Resources/blockerList.json" ] || { echo "blockerList.json missing from the appex" >&2; exit 1; }
+codesign --verify --strict --verbose=2 "$APP"
+for target in "$APP" "$APPEX"; do
+  codesign -dv "$target" 2>&1 | grep -q 'flags=.*runtime' \
+    || { echo "hardened runtime not enabled on $target" >&2; exit 1; }
+done
+
+printf '==> Notarizing (this takes a few minutes)\n'
+ditto -c -k --keepParent "$APP" "$BUILD/submit.zip"
+xcrun notarytool submit "$BUILD/submit.zip" "${NOTARY_AUTH[@]}" --wait
+
+printf '==> Stapling\n'
+xcrun stapler staple "$APP"
+xcrun stapler validate "$APP"
+spctl --assess --type execute --verbose=2 "$APP"
+
+printf '==> Packaging the stapled app\n'
+rm -f "$BUILD/submit.zip"
+ditto -c -k --keepParent "$APP" "$ZIP"
+SHA=$(shasum -a 256 "$ZIP" | awk '{print $1}')
+
+cat <<EOF
+
+==> Done.
+  Artifact : $ZIP
+  Version  : $VERSION
+  sha256   : $SHA
+
+Cask fields (Casks/hush.rb in saadjs/homebrew-tap):
+  version "$VERSION"
+  sha256 "$SHA"
+
+Next:
+  gh release create v$VERSION "$ZIP" --repo $GH_REPO --title "v$VERSION" --generate-notes
+EOF

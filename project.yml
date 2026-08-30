@@ -12,7 +12,7 @@ settings:
     ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
     SWIFT_VERSION: "6.0"
     CURRENT_PROJECT_VERSION: 2
-    MARKETING_VERSION: 0.1.0
+    MARKETING_VERSION: 2026.08.30
     DEAD_CODE_STRIPPING: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     STRING_CATALOG_GENERATE_SYMBOLS: YES
@@ -34,8 +34,9 @@ targets:
       properties:
         CFBundleDisplayName: Hush
         CFBundleIdentifier: sh.saad.hush
-        CFBundleShortVersionString: 0.1.0
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -65,7 +66,7 @@ targets:
       properties:
         CFBundleDisplayName: Hush
         CFBundleIdentifier: sh.saad.hush.ContentBlocker
-        CFBundleShortVersionString: 0.1.0
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.Safari.content-blocker
@@ -82,7 +83,9 @@ targets:
     type: application
     platform: macOS
     sources:
-      - App
+      - path: App
+        excludes:
+          - Info-iOS.plist
       - path: Rules/rules-metadata.json
         buildPhase: resources
     dependencies:
@@ -96,8 +99,10 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: sh.saad.hush
         PRODUCT_NAME: Hush
+        ENABLE_HARDENED_RUNTIME: YES
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Hush
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: "NO"
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
@@ -120,7 +125,7 @@ targets:
       properties:
         CFBundleDisplayName: Hush
         CFBundleIdentifier: sh.saad.hush.ContentBlocker
-        CFBundleShortVersionString: 0.1.0
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.Safari.content-blocker
@@ -130,6 +135,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: sh.saad.hush.ContentBlocker
         PRODUCT_NAME: Content Blocker
         SKIP_INSTALL: YES
+        ENABLE_HARDENED_RUNTIME: YES
         # Safari loads the appex binary directly; the debug-dylib shim hides the principal class
         ENABLE_DEBUG_DYLIB: NO
         # PlugInKit bootstraps AppKit subsystems before it instantiates the handler
