@@ -48,7 +48,7 @@ Third-party filter data retains its own license; see `THIRD_PARTY_NOTICES.md`. H
 
 ## Releasing
 
-iOS ships through the App Store. macOS ships through Homebrew:
+macOS ships through Homebrew:
 
 ```sh
 ./scripts/release-macos
@@ -59,6 +59,14 @@ Archives, exports a Developer ID build, notarizes and staples it, then prints th
 ```sh
 brew install --cask saadjs/tap/hush
 ```
+
+iOS ships through TestFlight and the App Store:
+
+```sh
+ASC_ISSUER_ID=<uuid> ./scripts/release-ios [build-number]
+```
+
+Archives and uploads to App Store Connect, creating signing assets as needed. The version comes from `MARKETING_VERSION`; pass a higher build number to re-upload the same rules, since App Store Connect rejects a duplicate version and build pair.
 
 ## Principles
 
