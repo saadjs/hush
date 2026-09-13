@@ -4,15 +4,28 @@ An ultra-minimal native Safari content blocker for iPhone, iPad, and Mac. Its on
 
 ## Install
 
-macOS, via Homebrew:
+<a href="https://apps.apple.com/us/app/hush-minimal-content-blocker/id6806835360">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/en-us">
+    <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store" width="150">
+  </picture>
+</a>
+<a href="https://apps.apple.com/us/app/hush-minimal-content-blocker/id6806835360">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-mac-app-store/white/en-us">
+    <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-mac-app-store/black/en-us" alt="Download on the Mac App Store" width="196">
+  </picture>
+</a>
+
+Hush is a universal purchase, so one download covers iPhone, iPad, and Mac.
+
+On iOS, enable it under Settings → Apps → Safari → Extensions.
+
+On macOS, open Hush once so Safari registers the content blocker, then enable it under Safari → Settings → Extensions. It is also available via Homebrew:
 
 ```sh
 brew install --cask saadjs/tap/hush
 ```
-
-Open Hush once so Safari registers the content blocker, then enable it under Safari → Settings → Extensions.
-
-iOS is distributed through TestFlight and the App Store. Enable it under Settings → Apps → Safari → Extensions.
 
 ## Privacy
 
