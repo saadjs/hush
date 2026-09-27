@@ -1,0 +1,4 @@
+! Hush site compatibility fixes
+! Allow Raptive detection probes to prevent its recovery error screen; script loads stay blocked.
+@@|https://ads.adthrive.com/abd/abd.js|$xmlhttprequest,domain=bromabakery.com|preppykitchen.com
+@@|https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js|$xmlhttprequest,domain=bromabakery.com|preppykitchen.com

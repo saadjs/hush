@@ -11,8 +11,8 @@ settings:
   base:
     ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
     SWIFT_VERSION: "6.0"
-    CURRENT_PROJECT_VERSION: 2
-    MARKETING_VERSION: 2026.08.30
+    CURRENT_PROJECT_VERSION: 3
+    MARKETING_VERSION: 2026.09.27
     DEAD_CODE_STRIPPING: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     STRING_CATALOG_GENERATE_SYMBOLS: YES
@@ -127,6 +127,7 @@ targets:
         CFBundleIdentifier: sh.saad.hush.ContentBlocker
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSHumanReadableDescription: Hush blocks ads and other unwanted content in Safari using bundled filter rules.
         NSExtension:
           NSExtensionPointIdentifier: com.apple.Safari.content-blocker
           NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ContentBlockerRequestHandler"

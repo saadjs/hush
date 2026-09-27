@@ -61,7 +61,7 @@ xcodebuild -project Hush.xcodeproj -scheme Hush-macOS \
 
 ## Rules
 
-The bundled rules are generated from EasyList and uBlock Origin's ad filters:
+The bundled rules are generated from EasyList, uBlock Origin's ad filters, and Hush's scoped compatibility fixes in `Rules/site-fixes.txt`:
 
 ```sh
 ./scripts/update-rules
